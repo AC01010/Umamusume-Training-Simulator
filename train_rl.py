@@ -100,9 +100,6 @@ class UmaEnv:
         pre_action_energy = self.uma.energy
         pre_action_mood = self.uma.mood
 
-
-        #Unsure if valid
-
         # --- Execute action ---
         if action in range(0, 5):
             # Training actions
