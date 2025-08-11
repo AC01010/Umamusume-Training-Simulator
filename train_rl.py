@@ -124,7 +124,7 @@ class UmaEnv:
             done = True
 
         # Penalties (tunable)
-        rest_penalty = -6.0  # penalty for unnecessary rest-like actions (when energy > 50)
+        rest_penalty = -10.0 # penalty for unnecessary rest-like actions (when energy > 50)
         train_low_energy_penalty = -2.5  # penalty for attempting to train with low energy (<50)
 
         # Positive bonuses (tunable)
@@ -135,7 +135,8 @@ class UmaEnv:
         # We give a bonus based on the *expected* immediate speed gain (so choosing Speed is rewarded even if it fails)
         # multiplier controls how strongly we prefer choosing Speed; tune as needed.
         speed_action_bonus = 0.0
-        if action == 0:
+        curr_speed = self.uma.stats[0]
+        if action == 0 and curr_speed > prev_speed:
             speed_action_bonus = 6
 
         penalty = 0.0
@@ -158,6 +159,9 @@ class UmaEnv:
         # Reward Rest if energy is low
         if action == 5 and pre_action_energy < 45:
             bonus += rest_reward
+
+        if action in (6, 7, 8) and pre_action_energy < 45:
+            bonus -= 20.0
 
         # Reward Recreation if mood is not "Great" (mood != 4)
         if action == 6 and pre_action_mood != 4:
