@@ -124,7 +124,7 @@ class UmaEnv:
             done = True
 
         # Penalties (tunable)
-        rest_penalty = -10.0 # penalty for unnecessary rest-like actions (when energy > 50)
+        rest_penalty = -20.0 # penalty for unnecessary rest-like actions (when energy > 50)
         train_low_energy_penalty = -30.0 # penalty for attempting to train with low energy (<50)
 
         # Positive bonuses (tunable)
@@ -144,7 +144,7 @@ class UmaEnv:
 
         other_training_penalty = -20.0  # penalty for training other stats (1-4) when speed is the main goal
 
-        if action in range(1, 5):
+        if action in (1, 2, 3, 4):
             # Penalize training other stats when speed is the main goal
             penalty += other_training_penalty
 
