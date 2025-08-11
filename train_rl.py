@@ -125,7 +125,7 @@ class UmaEnv:
 
         # Penalties (tunable)
         rest_penalty = -10.0 # penalty for unnecessary rest-like actions (when energy > 50)
-        train_low_energy_penalty = -2.5  # penalty for attempting to train with low energy (<50)
+        train_low_energy_penalty = -30.0 # penalty for attempting to train with low energy (<50)
 
         # Positive bonuses (tunable)
         rest_reward = 4.0  # reward for resting when energy < 45
