@@ -252,6 +252,8 @@ class Uma:
             self.badConditions.add("Night Owl")
             print("Energy went up by 30.")
             print("Acquired condition Night Owl.")
+
+        self.energy = min(self.maxEnergy, self.energy)  # Cap energy at max energy
         
     
     def recreation(self):
@@ -285,12 +287,15 @@ class Uma:
         
         # Cap mood at maximum 4
         self.mood = min(4, self.mood)
+
+        # Cap energy at max energy
+        self.energy = min(self.maxEnergy, self.energy)
         
     
     def infirmary(self):
         print("\nVisiting infirmary...")
         
-        self.energy += 20
+        self.energy = min(self.maxEnergy, self.energy + 20)
         print("Energy went up by 20.")
         
         # 85% chance of curing exactly one bad status condition (except "Under the Weather")
@@ -319,7 +324,7 @@ class Uma:
         self.mood = min(4, self.mood)
         
         # Cap energy bounds
-        self.energy = max(0, min(self.maxEnergy, self.energy))
+        self.energy = min(self.maxEnergy, self.energy)
 
     def displayStats(self):
         print()
