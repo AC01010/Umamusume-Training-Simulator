@@ -15,7 +15,7 @@ log_dir = "logs"
 
 def train():
 
-    #env = make_vec_env(UmaEnv, n_envs=12, env_kwargs={"num_of_rows":10, "seats_per_row":5}, vec_env_cls=SubprocVecEnv)
+    #env = make_vec_env(UmaEnv, n_envs=12, vec_env_cls=SubprocVecEnv)
     env = gym.make('uma-trainer-v1', render_mode='terminal')
 
     # Increase ent_coef to encourage exploration, this resulted in a better solution.
@@ -24,7 +24,7 @@ def train():
     eval_callback = MaskableEvalCallback(
         env,
         eval_freq=10_000,
-        # callback_on_new_best = StopTrainingOnRewardThreshold(reward_threshold=???, verbose=1)
+        # callback_on_new_best = StopTrainingOnRewardThreshold(reward_threshold=1100, verbose=1),
         # callback_after_eval  = StopTrainingOnNoModelImprovement(max_no_improvement_evals=???, min_evals=???, verbose=1)
         verbose=1,
         best_model_save_path=os.path.join(model_dir, 'MaskablePPO'),

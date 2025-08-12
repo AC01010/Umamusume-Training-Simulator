@@ -97,6 +97,7 @@ class UmaEnv(gym.Env):
 
         # Perform action
         if action_type == "train":
+            self.uma.assign_supports()
             self.uma.train(action_arg, current_turn=self.uma.turnNo)
         elif action_type == "rest":
             self.uma.rest()
@@ -119,16 +120,20 @@ class UmaEnv(gym.Env):
     def _calculate_reward(self, prev_obs):
         curr_obs = self._get_obs()
 
-        speed_increase = curr_obs['stats'][0] - prev_obs['stats'][0]
-        reward = clamp(speed_increase / 100.0, -1.0, 1.0)
-        return reward
+        if curr_obs['turns_no'] == 72:
+            # End of the game, reward based on final stats
+            final_stats = curr_obs['stats']
+            final_score = np.sum(final_stats)
+            return final_score
+        return -1.0
+
 
     def render(self):
         if self.render_mode is None:
             return
 
         if self.render_mode == 'human':
-            self.uma.displayTraining()
+            self.uma.renderTraining()
         elif self.render_mode == 'terminal':
             self.uma.displayStats()
         else:

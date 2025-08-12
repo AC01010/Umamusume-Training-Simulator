@@ -237,6 +237,7 @@ class Uma:
             
             # Display energy change
             energy_cost = abs(training_stats[-1])
+            print(f"Supports on facility: {[self.support_cards[a].name for a in self.card_assignment[training_type]]}")
             print(f"Energy went down by {energy_cost}.")
 
             print(f"Skill points went up by {stat_changes[-1]}.")
@@ -514,6 +515,39 @@ class Uma:
 
             increases.append(training_stats)
         return np.array(increases)
+
+    def renderTraining(self):
+        print("\n--- Training Options ---")
+        training_options = ["Speed", "Stamina", "Power", "Guts", "Intelligence"]
+
+        for i, training in enumerate(training_options):
+            if self.turnNo in SUMMER_TURNS:
+                level = 5
+            else:
+                level = get_training_level(self.facilityClicks[i])
+
+            training_stats = self.get_training_stats(i)
+            energy_after = self.energy + training_stats[-1]  # Add energy cost (negative)
+            failure_rate = min(100, calculate_failure_rate(i, energy_after) * 100)  # Cap display at 100%
+
+            # Display stats that will be gained
+            stat_gains = []
+            stat_names = ["Speed", "Stamina", "Power", "Guts", "Intelligence"]
+            for j in range(5):
+                if training_stats[j] > 0:
+                    stat_gains.append(f"+{training_stats[j]} {stat_names[j]}")
+
+            skill_pts = training_stats[5] if len(training_stats) > 5 else 0
+
+            supp_on_facility = [self.support_cards[a].name for a in self.card_assignment[i]]
+            bonds_on_facility = [self.support_bonds[a] for a in self.card_assignment[i]]
+
+            print(f"{i + 1}) {training} (Lv{level})")
+            print(f'   Supports: {list(zip(supp_on_facility, bonds_on_facility))}')
+            print(f"   Stats: {', '.join(stat_gains) if stat_gains else 'None'}")
+            print(f"   Skill Pts: +{skill_pts}")
+            print(f"   Energy After: {max(0, energy_after)}")
+            print(f"   Failure Rate: {failure_rate:.1f}%")
     
     def turn(self):
         # Display large banner for current turn's date
