@@ -1,5 +1,8 @@
 import json
 import random
+import numpy as np
+from support_card import support
+from tabulate import tabulate
 
 BASE_STATS = {
     1: {
@@ -115,16 +118,16 @@ def sim_training_fail(training_type, energy_after_training):
 
 
 class Uma:
-    def __init__(self, character_data):
+    def __init__(self, character_data, support_cards):
         self.name = character_data['name']
         self.surfaceAptitude = character_data['surfaceAptitude']
         self.distanceAptitudes = character_data['distanceAptitudes']
         self.strategyAptitudes = character_data['strategyAptitudes']
-        self.growthRate = character_data['growthRate']
+        self.growthRate = np.array(character_data['growthRate'])
         
         self.energy = 100
         self.maxEnergy = 100
-        self.stats = character_data['baseStats'].copy()
+        self.stats = np.array(character_data['baseStats'].copy())
         self.facilityClicks = [0, 0, 0, 0, 0]
         self.mood = 2
         self.fans = 1
@@ -132,6 +135,60 @@ class Uma:
         self.goodConditions = set()
         self.badConditions = set()
         self.skillPoints = 0
+
+        self.support_cards = support_cards
+        self.support_bonds = [0, 0, 0, 0, 0, 0]
+
+        for i, support_card in enumerate(support_cards):
+            self.support_bonds[i] = support_card.init_friend_gauge
+
+        self.card_assignment = [[0, 1] for _ in range(6)]
+
+    def assign_supports(self):
+        self.card_assignment = [[] for _ in range(6)]
+        for i, support_card in enumerate(self.support_cards):
+            assigned_facility = np.random.choice(np.arange(6), p=support_card.get_weight())
+            self.card_assignment[assigned_facility].append(i)
+
+    def get_training_stats(self, training_type):
+        current_turn = self.turnNo
+
+        if current_turn in SUMMER_TURNS:
+            level = 5  # Summer training is always level 5
+        else:
+            level = get_training_level(self.facilityClicks[training_type])
+
+        supp_on_training = self.card_assignment[training_type]
+
+        training_stats = np.array(BASE_STATS[level][training_type])
+
+        # (3, n) array for n support cards, row 0 is mood effect, row 1 is training effect, row 2 is friend effect
+        card_effs = [[], [], []]
+
+        flat_bonus = np.zeros(6)
+
+        # get training multipliers
+        for support_i in supp_on_training:
+            if self.support_cards[support_i].stat_bonus[training_type] >= 1:
+                flat_bonus += self.support_cards[support_i].stat_bonus
+            card_effs[0].append(self.support_cards[support_i].get_mood_eff())
+            card_effs[1].append(self.support_cards[support_i].get_train_eff())
+            if self.support_bonds[support_i] >= 80 and self.support_cards[support_i].type == training_type:
+                card_effs[2].append(self.support_cards[support_i].get_friend_eff())
+            else:
+                card_effs[2].append(1)
+
+        effect_vec = np.prod(np.array(card_effs), axis=1)
+
+        multiplier = self.growthRate \
+                     * (1 + ((self.mood - 2) * 0.1) * effect_vec[0]) \
+                     * effect_vec[1] \
+                     * (1 + 0.05 * len(supp_on_training)) \
+                     * effect_vec[2]
+
+        stat_changes = ((training_stats[:6] + flat_bonus) * multiplier).astype(int)
+
+        return stat_changes
     
     def train(self, training_type, current_turn=None):
         # Get training level and stats
@@ -143,7 +200,7 @@ class Uma:
         else:
             level = get_training_level(self.facilityClicks[training_type])
         
-        training_stats = BASE_STATS[level][training_type]
+        training_stats = np.array(BASE_STATS[level][training_type])
         
         # Check for failure (using energy after potential cost)
         energy_after_training = self.energy + training_stats[-1]
@@ -152,25 +209,29 @@ class Uma:
         else:
             # Successful training - apply energy cost and stat gains
             print("\nTraining success!")
-            
+
+            supp_on_training = self.card_assignment[training_type]
+
+            for support_i in supp_on_training:
+                self.support_bonds[support_i] = min(100, self.support_bonds[support_i] + 7)
+
             self.energy += training_stats[-1]
             self.energy = max(0, self.energy)  # Lower bound at 0
-            
-            # Display stat changes
+
+            stat_changes = self.get_training_stats(training_type)
+
+            self.stats += stat_changes
+
             stat_names = ["Speed", "Stamina", "Power", "Guts", "Intelligence"]
-            for i in range(5):  # Apply first 5 stats (speed, stamina, power, guts, intelligence)
+            for i in range(5):
                 if training_stats[i] > 0:
-                    self.stats[i] += training_stats[i]
-                    print(f"{stat_names[i]} went up by {training_stats[i]}.")
+                    print(f"{stat_names[i]} went up by {stat_changes[i]}.")
             
             # Display energy change
             energy_cost = abs(training_stats[-1])
             print(f"Energy went down by {energy_cost}.")
-            
-            # Add skill points (6th element, index 5)
-            if training_stats[5] > 0:
-                self.skillPoints += training_stats[5]
-                print(f"Skill points went up by {training_stats[5]}.")
+
+            print(f"Skill points went up by {stat_changes[-1]}.")
             
             # Increment facility clicks
             self.facilityClicks[training_type] += 1
@@ -337,18 +398,12 @@ class Uma:
         energy_bar = "█" * filled_blocks + "▒" * (bar_length - filled_blocks)
         
         print(f"\nEnergy: [ {energy_bar} ] {energy_percentage}% | Mood: {MOOD_NAMES.get(self.mood, 'Unknown')}")
-        
-        # Display stats in table format
-        label_row = "| 👟 Speed | ❤️  Stamina | 💪 Power | 🔥 Guts | 📚 Wit |  | ✨ Skill Pts |"
-        value_row = f"|{self.stats[0]:>9} |{self.stats[1]:>11} |{self.stats[2]:>9} |{self.stats[3]:>8} |{self.stats[4]:>7} |  |{self.skillPoints:>13} |"
-        separator = "+----------+------------+----------+---------+--------+  +--------------+"
-        
-        print(separator)
-        print(label_row)
-        print(separator)
-        print(value_row)
-        print(separator)
-        
+
+        headers = ['Speed', 'Stamina', 'Power', 'Guts', 'Wit', 'Skill Pts']
+        vals = self.stats.reshape((1, -1))
+
+        print(tabulate(vals, headers=headers, tablefmt='rounded_outline'))
+
         if self.goodConditions or self.badConditions:
             all_conditions = list(self.goodConditions) + list(self.badConditions)
             print(f"\nConditions: {', '.join(all_conditions)}")
@@ -392,13 +447,12 @@ class Uma:
         training_options = ["Speed", "Stamina", "Power", "Guts", "Intelligence"]
         
         for i, training in enumerate(training_options):
-            # Get training level
             if self.turnNo in SUMMER_TURNS:
                 level = 5
             else:
                 level = get_training_level(self.facilityClicks[i])
             
-            training_stats = BASE_STATS[level][i]
+            training_stats = self.get_training_stats(i)
             energy_after = self.energy + training_stats[-1]  # Add energy cost (negative)
             failure_rate = min(100, calculate_failure_rate(i, energy_after) * 100) # Cap display at 100%
             
@@ -410,8 +464,12 @@ class Uma:
                     stat_gains.append(f"+{training_stats[j]} {stat_names[j]}")
             
             skill_pts = training_stats[5] if len(training_stats) > 5 else 0
-            
+
+            supp_on_facility = [self.support_cards[a].name for a in self.card_assignment[i]]
+            bonds_on_facility = [self.support_bonds[a] for a in self.card_assignment[i]]
+
             print(f"{i+1}) {training} (Lv{level})")
+            print(f'   Supports: {list(zip(supp_on_facility, bonds_on_facility))}')
             print(f"   Stats: {', '.join(stat_gains) if stat_gains else 'None'}")
             print(f"   Skill Pts: +{skill_pts}")
             print(f"   Energy After: {max(0, energy_after)}")
@@ -436,6 +494,12 @@ class Uma:
         
         # Display current stats
         self.displayStats()
+        self.assign_supports()
+        # print(f'Speed: {[self.support_cards[i].name for i in self.card_assignment[0]]} '
+        #       f'Stamina: {[self.support_cards[i].name for i in self.card_assignment[1]]} '
+        #       f'Power: {[self.support_cards[i].name for i in self.card_assignment[2]]} '
+        #       f'Guts: {[self.support_cards[i].name for i in self.card_assignment[3]]} '
+        #       f'Wit: {[self.support_cards[i].name for i in self.card_assignment[4]]}')
         
         # Get turn options and choice
         _, option_name = self.displayTurn(self.turnNo)
@@ -479,7 +543,38 @@ def load_character(character_name):
 
 def main():
     character_data = load_character("Sakura Bakushin O")
-    uma = Uma(character_data)
+    kitasan = support(name='Kitasan Black',
+                      type=0,
+                      friendship_bonus=25,
+                      mood_effect=30,
+                      stat_bonus=[0, 0, 1, 0, 0, 0],
+                      training_effectiveness=15,
+                      init_stats=[0, 0, 0, 0, 0, 0],
+                      init_friend_gauge=35,
+                      race_bonus=5,
+                      fan_bonus=15,
+                      hint_levels=2,
+                      hint_freq=30,
+                      specialty_priority=100,
+                      wit_recovery=0)
+
+    super_boob = support(name='Super Boob',
+                         type=1,
+                         friendship_bonus=37.5,
+                         mood_effect=0,
+                         stat_bonus=[0, 1, 0, 0, 0, 0],
+                         training_effectiveness=15,
+                         init_stats=[0, 35, 0, 0, 0, 0],
+                         init_friend_gauge=30,
+                         race_bonus=10,
+                         fan_bonus=20,
+                         hint_levels=0,
+                         hint_freq=0,
+                         specialty_priority=55,
+                         wit_recovery=0)
+
+    uma = Uma(character_data, [kitasan, super_boob])
+
     
     print(f"🏇 Welcome to Umamusume Training Simulator! 🏇")
     
