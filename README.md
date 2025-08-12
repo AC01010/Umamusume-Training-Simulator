@@ -12,39 +12,12 @@ A Python-based simulator for Umamusume Pretty Derby training mechanics, focusing
 
 ## API Structure
 
-### Main Classes
+The simulator is built around two main classes:
 
-#### `Uma`
-The primary character class that handles all training mechanics.
+- **`Uma`**: The primary character class handling training mechanics, stat calculations, and turn progression
+- **`support`**: Support card class with bonuses, effects, and facility assignment logic
 
-**Key Methods:**
-- `__init__(character_data, support_cards)` - Initialize character with data and support cards
-- `train(training_type, current_turn=None)` - Execute training with failure/success logic
-- `rest()` - Rest action with energy recovery probabilities
-- `recreation()` - Recreation activities (karaoke, stroll, shrine visits)
-- `infirmary()` - Remove bad conditions and recover energy
-- `rest_and_recreation()` - Combined rest/recreation for summer turns
-- `get_training_stats(training_type)` - Calculate stat gains for training
-- `assign_supports()` - Randomly assign support cards to facilities
-- `displayStats()` - Show current character state
-- `turn()` - Execute a single turn of training
-
-#### `support`
-Support card class with training bonuses and effects.
-
-**Key Methods:**
-- `get_weight()` - Calculate facility assignment probabilities
-- `get_mood_eff()` - Mood effectiveness multiplier
-- `get_train_eff()` - Training effectiveness multiplier  
-- `get_friend_eff()` - Friendship bonus multiplier
-
-### Key Functions
-
-- `load_character(character_name)` - Load character data from JSON
-- `load_support_card(name)` - Load individual support card by name
-- `calculate_failure_rate(training_type, energy_after_training)` - Compute training failure probability
-- `sim_training_fail(training_type, energy_after_training)` - Simulate training failure
-- `get_training_level(clicks)` - Convert facility clicks to training level
+Key functions include `load_character()` and `load_support_card()` for loading data from JSON files, plus various utility functions for failure rates and stat calculations.
 
 ## Implemented Mechanics
 
@@ -116,36 +89,16 @@ $$P_{\text{facility}} = \begin{cases}
 
 The following Umamusume mechanics are **not** currently implemented:
 
-### Racing System
-- Race participation and results
-- Racing rewards (fans, skill points, money)
-- Race-specific stat requirements and performance calculations
-- Seasonal race schedules and G1/G2/G3 classifications
-
-### Random Events
-- Support card events and story branches
-- Trainee random events and interactions
-- Special training events (hot springs, etc.)
-- Seasonal events and festivals
-
-### Advanced Mechanics
-- **Legacy System**: Inheritance of stats and skills from previous generations
-- **Sparks**: Temporary stat boosts during training
-- **Skill System**: Learning and upgrading racing skills
-- **Conditions**: Additional status effects beyond basic good/bad conditions
-- **Scenario-Specific Mechanics**: URA, Aoharu, MANT, etc.
+### Core Gameplay
+- **Racing System**: Race participation, results, rewards, and performance calculations
+- **Random Events**: Support card events, trainee interactions, seasonal events
+- **Skill System**: Learning, upgrading, and using racing skills
+- **Legacy/Factor System**: Stat inheritance from previous generations
 
 ### Support Card Features
-- Support card events and branching dialogues
+- Support card events and story dialogues
 - Hint system for skill acquisition
-- Support card-specific training bonuses
-- Rainbow spark and other special effects
-
-### Character Progression
-- Awakening levels and stat caps
-- Factor inheritance system  
-- Multiple scenario routes and endings
-- Character-specific unique skills and events
+- Special training bonuses and effects
 
 ## Data Sources
 
