@@ -453,6 +453,7 @@ class Uma:
     def displayTraining(self):
         print("\n--- Training Options ---")
         training_options = ["Speed", "Stamina", "Power", "Guts", "Intelligence"]
+
         
         for i, training in enumerate(training_options):
             if self.turnNo in SUMMER_TURNS:
@@ -492,6 +493,27 @@ class Uma:
                     print(f"Please enter a number between 1 and {len(training_options)}")
             except ValueError:
                 print("Please enter a valid number")
+
+    def getTrainingIncrease(self):
+        training_options = ["Speed", "Stamina", "Power", "Guts", "Intelligence"]
+        increases = []
+
+        for i, training in enumerate(training_options):
+            if self.turnNo in SUMMER_TURNS:
+                level = 5
+            else:
+                level = get_training_level(self.facilityClicks[i])
+
+            training_stats = self.get_training_stats(i)
+            energy_after = self.energy + training_stats[-1]  # Add energy cost (negative)
+            failure_rate = min(100, calculate_failure_rate(i, energy_after) * 100)  # Cap display at 100%
+
+            #Convert training stats to a list and add failure rate
+            training_stats = training_stats.tolist()
+            training_stats.append(failure_rate)
+
+            increases.append(training_stats)
+        return np.array(increases)
     
     def turn(self):
         # Display large banner for current turn's date
