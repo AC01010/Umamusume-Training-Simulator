@@ -147,7 +147,7 @@ class Uma:
         for support_card in support_cards:
             self.stats += support_card.init_stats
 
-        self.card_assignment = [[0, 1] for _ in range(6)]
+        self.card_assignment = [[0] for _ in range(6)]
 
     def assign_supports(self):
         self.card_assignment = [[] for _ in range(6)]
@@ -174,8 +174,9 @@ class Uma:
 
         # get training multipliers
         for support_i in supp_on_training:
-            if self.support_cards[support_i].stat_bonus[training_type] >= 1:
-                flat_bonus += self.support_cards[support_i].stat_bonus
+            supp_flat_bonus = self.support_cards[support_i].stat_bonus
+            if np.any((training_stats >= 1) & (supp_flat_bonus == 1)):
+                flat_bonus += supp_flat_bonus
             card_effs[0].append(self.support_cards[support_i].get_mood_eff())
             card_effs[1].append(self.support_cards[support_i].get_train_eff())
             if self.support_bonds[support_i] >= 80 and self.support_cards[support_i].type == training_type:
@@ -501,12 +502,7 @@ class Uma:
         
         # Display current stats
         self.displayStats()
-        self.assign_supports()
-        # print(f'Speed: {[self.support_cards[i].name for i in self.card_assignment[0]]} '
-        #       f'Stamina: {[self.support_cards[i].name for i in self.card_assignment[1]]} '
-        #       f'Power: {[self.support_cards[i].name for i in self.card_assignment[2]]} '
-        #       f'Guts: {[self.support_cards[i].name for i in self.card_assignment[3]]} '
-        #       f'Wit: {[self.support_cards[i].name for i in self.card_assignment[4]]}')
+        # self.assign_supports()
         
         # Get turn options and choice
         _, option_name = self.displayTurn(self.turnNo)
