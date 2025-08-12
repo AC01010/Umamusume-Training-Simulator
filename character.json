@@ -1,10 +1,10 @@
 [
   {
     "name": "Sakura Bakushin O",
-    "baseStats": [87, 54, 93, 85, 81],
+    "baseStats": [87, 54, 93, 85, 81, 120],
     "surfaceAptitude": ["A", "G"],
     "distanceAptitudes": ["A", "B", "G", "G"],
     "strategyAptitudes": ["A", "A", "F", "G"],
-    "growthRate": [1.2, 1, 1, 1, 1.1]
+    "growthRate": [1.2, 1, 1, 1, 1.1, 1]
   }
 ]
