@@ -75,17 +75,17 @@ Where:
 - $B$ = Base training stat
 - $F$ = Flat bonus from support cards
 - $G$ = Character growth rate
-- $M$ = Mood multiplier: $1 + (\text{mood} - 2) \cdot 0.1 \cdot \text{mood\\_effect}$
-- $T$ = Training effectiveness: $1 + \text{training\\_eff}/100$
-- $P$ = Partner bonus: $1 + 0.05 \cdot \text{num\\_partners}$
-- $\text{Fr}$ = Friend bonus: $1 + \text{friendship\\_bonus}/100$ (when bond ≥ 80)
+- $M$ = Mood multiplier: $1 + (\text{mood} - 2) \cdot 0.1 \cdot \text{moodEffect}$
+- $T$ = Training effectiveness: $1 + \text{trainingEff}/100$
+- $P$ = Partner bonus: $1 + 0.05 \cdot \text{numPartners}$
+- $\text{Fr}$ = Friend bonus: $1 + \text{friendshipBonus}/100$ (when bond ≥ 80)
 
 ### Support Card Assignment
 Support cards are assigned to facilities each turn based on weighted probabilities:
 
 $$P_{\text{facility}} = \begin{cases}
-0.18 \cdot (1 + \text{specialty\\_priority}/100) & \text{if specialty facility} \\
-0.18 - \frac{\text{specialty\\_bonus}}{4} & \text{if other facility} \\
+0.18 \cdot (1 + \text{specialtyPriority}/100) & \text{if specialty facility} \\
+0.18 - \frac{\text{specialtyBonus}}{4} & \text{if other facility} \\
 0.1 & \text{if no facility}
 \end{cases}$$
 
