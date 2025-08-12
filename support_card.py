@@ -36,19 +36,3 @@ class support():
     def get_friend_eff(self):
         return 1 + self.friendship_bonus / 100
 
-if __name__ == '__main__':
-    kitasan = support(type=0,
-                      friendship_bonus=25,
-                      mood_effect=30,
-                      stat_bonus=[0, 0, 1, 0, 0, 0],
-                      training_effectiveness=15,
-                      init_stats=[0, 0, 0, 0, 0, 0],
-                      init_friend_gauge=35,
-                      race_bonus=5,
-                      fan_bonus=15,
-                      hint_levels=2,
-                      hint_freq=30,
-                      specialty_priority=100,
-                      wit_recovery=0)
-
-    print(kitasan.get_weight())

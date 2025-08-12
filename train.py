@@ -147,7 +147,7 @@ class Uma:
         for support_card in support_cards:
             self.stats += support_card.init_stats
 
-        self.card_assignment = [[0] for _ in range(6)]
+        self.card_assignment = [[] for _ in range(6)]
 
     def assign_supports(self):
         self.card_assignment = [[] for _ in range(6)]
@@ -502,7 +502,7 @@ class Uma:
         
         # Display current stats
         self.displayStats()
-        # self.assign_supports()
+        self.assign_supports()
         
         # Get turn options and choice
         _, option_name = self.displayTurn(self.turnNo)
@@ -544,39 +544,24 @@ def load_character(character_name):
     raise ValueError(f"Character '{character_name}' not found")
 
 
+def load_support_card(name):
+    with open('support_cards.json', 'r') as f:
+        support_data = json.load(f)
+    
+    for card_data in support_data:
+        if card_data['name'] == name:
+            return support(**card_data)
+    
+    raise ValueError(f"Support card '{name}' not found")
+
+
 def main():
     character_data = load_character("Sakura Bakushin O")
-    kitasan = support(name='Kitasan Black',
-                      type=0,
-                      friendship_bonus=25,
-                      mood_effect=30,
-                      stat_bonus=[0, 0, 1, 0, 0, 0],
-                      training_effectiveness=15,
-                      init_stats=[0, 0, 0, 0, 0, 0],
-                      init_friend_gauge=35,
-                      race_bonus=5,
-                      fan_bonus=15,
-                      hint_levels=2,
-                      hint_freq=30,
-                      specialty_priority=100,
-                      wit_recovery=0)
-
-    super_boob = support(name='Super Boob',
-                         type=1,
-                         friendship_bonus=37.5,
-                         mood_effect=0,
-                         stat_bonus=[0, 1, 0, 0, 0, 0],
-                         training_effectiveness=15,
-                         init_stats=[0, 35, 0, 0, 0, 0],
-                         init_friend_gauge=30,
-                         race_bonus=10,
-                         fan_bonus=20,
-                         hint_levels=0,
-                         hint_freq=0,
-                         specialty_priority=55,
-                         wit_recovery=0)
-
-    uma = Uma(character_data, [kitasan, super_boob])
+    support_cards = [
+        load_support_card("Kitasan Black"),
+        load_support_card("Super Creek")
+    ]
+    uma = Uma(character_data, support_cards)
 
     
     print(f"🏇 Welcome to Umamusume Training Simulator! 🏇")
