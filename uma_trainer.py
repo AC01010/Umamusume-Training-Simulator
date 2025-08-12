@@ -119,7 +119,6 @@ class UmaEnv(gym.Env):
     def _calculate_reward(self, prev_obs):
         curr_obs = self._get_obs()
 
-        #Reward based on the speed stat increase
         speed_increase = curr_obs['stats'][0] - prev_obs['stats'][0]
         reward = clamp(speed_increase / 100.0, -1.0, 1.0)
         return reward

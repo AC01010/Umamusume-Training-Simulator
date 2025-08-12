@@ -53,6 +53,8 @@ def test(model_name, render=True):
         action, _ = model.predict(observation=obs, deterministic=True, action_masks=action_masks) # Turn on deterministic, so predict always returns the same behavior
         obs, reward, terminated, _, _ = env.step(action)
         rewards += reward
+        if render:
+            env.render()
 
         if terminated:
             break
@@ -62,6 +64,6 @@ def test(model_name, render=True):
 
 if __name__ == '__main__':
     #train()
-    test("best_model.zip", render='terminal')
+    test("best_model.zip", render='human')
 
 
