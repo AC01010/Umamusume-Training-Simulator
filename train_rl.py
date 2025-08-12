@@ -43,9 +43,13 @@ def train(character_name='Sakura Bakushin O', support_cards=None):
     """
     model.learn(total_timesteps=int(1e10), callback=eval_callback)
 
-def test(model_name, render=True):
+def test(model_name, render=True, character_name='Sakura Bakushin O', support_cards=None):
 
-    env = gym.make('uma-trainer-v1', render_mode='terminal')
+    if support_cards is None:
+        support_cards = ['Kitasan Black']
+
+    env = gym.make('uma-trainer-v1', render_mode='terminal',
+                   character_name=character_name, support_cards=support_cards)
 
     # Load model
     model = MaskablePPO.load(f'models/MaskablePPO/{model_name}', env=env)
@@ -79,8 +83,8 @@ if __name__ == '__main__':
     support_cards.append('Fine Motion')
     support_cards.append('Matikanefukukitaru')
 
-    train(character_name, support_cards)
+    #train(character_name, support_cards)
 
-    #test("best_model_statline.zip", render='human')
+    test("best_model.zip", render='human', character_name=character_name, support_cards=support_cards)
 
 
