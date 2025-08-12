@@ -118,15 +118,72 @@ class UmaEnv(gym.Env):
         return obs, reward, terminated, truncated, info
 
     def _calculate_reward(self, prev_obs):
+        """
+        Hierarchical reward:
+          1) If stamina (idx=1) not at its target, reward progress toward stamina only (big weight).
+             Penalize remaining stamina shortfall.
+          2) Else (stamina reached), reward progress toward speed (idx=0) (second priority).
+             Also allow small reward for progress on other stats.
+          Progress beyond a stat's target yields no extra reward.
+        """
         curr_obs = self._get_obs()
+        # Only first 5 stats considered here
+        prev_stats = np.array(prev_obs['stats'][:5], dtype=np.float32)
+        curr_stats = np.array(curr_obs['stats'][:5], dtype=np.float32)
 
-        if curr_obs['turns_no'] == 72:
-            # End of the game, reward based on final stats
-            final_stats = curr_obs['stats']
-            final_score = np.sum(final_stats)
-            return final_score
-        return -1.0
+        # targets (first five stats)
+        targets = np.array([500., 500., 150., 100., 200.], dtype=np.float32)
 
+        # indexes
+        SPEED = 0
+        STAMINA = 1
+
+        # Tunable weights / penalties (try adjusting these)
+        W_STAM_PROGRESS = 3.0  # reward per 1 point progress toward stamina while stamina incomplete
+        P_STAM_SHORTFALL = 0.03  # penalty per 1 point stamina short of target
+        W_SPEED_PROGRESS = 2.0  # reward per 1 point progress toward speed after stamina reached
+        W_OTHER_PROGRESS = 0.2  # small reward for progress on other stats when speed is prioritized
+        P_OTHER_SHORTFALL = 0.01  # small penalty per 1 point other stats short of target
+
+        # --- cap stats at target for rewarding progress only up to the target ---
+        prev_capped = np.minimum(prev_stats, targets)
+        curr_capped = np.minimum(curr_stats, targets)
+
+        reward = 0.0
+
+        # check whether stamina target reached (use curr_stats, not capped so we know achievement)
+        if curr_stats[STAMINA] < targets[STAMINA]:
+            # PRIORITY: stamina
+            progress_stam = float(max(0.0, curr_capped[STAMINA] - prev_capped[STAMINA]))
+            reward += W_STAM_PROGRESS * progress_stam
+
+            # penalty proportional to remaining stamina shortfall
+            short_stam = float(max(0.0, targets[STAMINA] - curr_stats[STAMINA]))
+            reward -= P_STAM_SHORTFALL * short_stam
+
+            # optional: small penalty for other stats still under their target (to encourage balanced improvement)
+            other_idx = [i for i in range(5) if i != STAMINA]
+            short_others = np.maximum(targets[other_idx] - curr_stats[other_idx], 0.0)
+            reward -= P_OTHER_SHORTFALL * float(np.sum(short_others))
+
+        else:
+            # Stamina reached -> PRIORITY: speed
+            progress_speed = float(max(0.0, curr_capped[SPEED] - prev_capped[SPEED]))
+            reward += W_SPEED_PROGRESS * progress_speed
+
+            # small reward for progress on other stats (excluding speed and stamina)
+            other_idx = [i for i in range(5) if i not in (SPEED, STAMINA)]
+            progress_others = np.maximum(curr_capped[other_idx] - prev_capped[other_idx], 0.0)
+            reward += W_OTHER_PROGRESS * float(np.sum(progress_others))
+
+            # penalties for stats under target (still encourage meeting all targets)
+            shortfalls = np.maximum(targets - curr_stats, 0.0)
+            reward -= P_OTHER_SHORTFALL * float(np.sum(shortfalls))
+
+        # Debug: print if you'd like to inspect rewards (comment out in production)
+        print("reward:", reward, "curr_stats:", curr_stats, "prev_stats:", prev_stats)
+
+        return float(reward)
 
     def render(self):
         if self.render_mode is None:
@@ -144,9 +201,21 @@ class UmaEnv(gym.Env):
     def action_masks(self) -> list[bool]:
         mask = []
 
-        #Always allow the first 5 training options + rest + recreation
-        for i in range(7):
+        #Always allow the first 5 training options
+        for i in range(5):
             mask.append(True)
+
+        #Rest is only available on non summer turns
+        if self.uma.turnNo not in SUMMER_TURNS:
+            mask.append(True)
+        else:
+            mask.append(False)
+
+        #Recreation is only available on non summer turns
+        if self.uma.turnNo not in SUMMER_TURNS:
+            mask.append(True)
+        else:
+            mask.append(False)
 
         #Infirmary is only available if there is a bad condition
         if len(self.uma.badConditions) > 0:

@@ -612,12 +612,19 @@ def load_support_card(name):
 
 
 def main():
+    support_cards = []
+    support_cards.append('Kitasan Black')
+    support_cards.append('Super Creek')
+    support_cards.append('Sweep Tosho')
+    support_cards.append('Manhattan Cafe')
+    support_cards.append('Fine Motion')
+    support_cards.append('Matikanefukukitaru')
+
     character_data = load_character("Sakura Bakushin O")
-    support_cards = [
-        load_support_card("Kitasan Black"),
-        load_support_card("Super Creek")
-    ]
-    uma = Uma(character_data, support_cards)
+
+    supports = [load_support_card(name) for name in support_cards]
+
+    uma = Uma(character_data, supports)
 
     
     print(f"🏇 Welcome to Umamusume Training Simulator! 🏇")
