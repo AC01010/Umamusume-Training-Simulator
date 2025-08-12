@@ -6,7 +6,7 @@ from tabulate import tabulate
 
 BASE_STATS = {
     1: {
-        0: [10, 0, 5, 0, 0, 2, -21],   # Speed: [speed, stamina, power, guts, intelligence, sp, ???, energy_cost]
+        0: [10, 0, 5, 0, 0, 2, -21],   # Speed: [speed, stamina, power, guts, intelligence, sp energy_cost]
         1: [0, 9, 0, 4, 0, 2, -19],    # Stamina
         2: [0, 5, 8, 0, 0, 2, -20],    # Power
         3: [4, 0, 4, 8, 0, 2, -22],    # Guts
@@ -139,8 +139,13 @@ class Uma:
         self.support_cards = support_cards
         self.support_bonds = [0, 0, 0, 0, 0, 0]
 
+        # initialize friend gauge
         for i, support_card in enumerate(support_cards):
             self.support_bonds[i] = support_card.init_friend_gauge
+
+        # add initial stats from support cards
+        for support_card in support_cards:
+            self.stats += support_card.init_stats
 
         self.card_assignment = [[0, 1] for _ in range(6)]
 
@@ -178,8 +183,10 @@ class Uma:
             else:
                 card_effs[2].append(1)
 
+        # row wise product
         effect_vec = np.prod(np.array(card_effs), axis=1)
 
+        # stat multiplier vector
         multiplier = self.growthRate \
                      * (1 + ((self.mood - 2) * 0.1) * effect_vec[0]) \
                      * effect_vec[1] \
