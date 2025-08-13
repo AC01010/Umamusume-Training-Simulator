@@ -216,7 +216,7 @@ class Uma:
             self._handle_training_failure(training_type)
         else:
             # Successful training - apply energy cost and stat gains
-            print("\nTraining success!")
+            print(f"\nTraining success on {FACILITY_MAP[training_type]}.")
 
             supp_on_training = self.card_assignment[training_type]
 
@@ -237,7 +237,10 @@ class Uma:
             
             # Display energy change
             energy_cost = abs(training_stats[-1])
-            print(f"Supports on facility: {[self.support_cards[a].name for a in self.card_assignment[training_type]]}")
+            #Display the supports and the names of their facility
+            print("-----------")
+            for training in supp_on_training:
+                print(f"{self.support_cards[training].name} is on {FACILITY_MAP[training_type]} facility.")
             print(f"Energy went down by {energy_cost}.")
 
             print(f"Skill points went up by {stat_changes[-1]}.")
