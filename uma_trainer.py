@@ -34,7 +34,7 @@ KNOWN_CONDITIONS = [
 class UmaEnv(gym.Env):
     metadata = {'render_modes': ['human','terminal'], 'render_fps': 1}
 
-    def __init__(self, render_mode=None, character_name='Sakura Bakushin O', support_cards=None):
+    def __init__(self, render_mode=None, character_name='Sakura Bakushin O', support_cards=None, log_level=logging.WARNING):
         super().__init__()
         if support_cards is None:
             support_cards = ['Kitasan Black', 'Super Creek']
@@ -43,6 +43,8 @@ class UmaEnv(gym.Env):
         self.support_cards = support_cards
 
         self.uma = None
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(log_level)
 
         self.action_space = spaces.Discrete(len(ACTION_MAP))
 
@@ -59,12 +61,9 @@ class UmaEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed) # gym requires this call to control randomness and reproduce scenarios.
 
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logging.WARNING)
-
         character = load_character(self.character_name)
         support_cards = [load_support_card(name) for name in self.support_cards]
-        self.uma = Uma(logger=logger, character_data=character, support_cards=support_cards)
+        self.uma = Uma(logger=self.logger, character_data=character, support_cards=support_cards)
         self.render()
 
         return self._get_obs(), {}

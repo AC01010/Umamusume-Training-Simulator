@@ -2,6 +2,10 @@
 
 A Python-based simulator for Umamusume Pretty Derby training mechanics, focusing on accurate stat growth, failure rates, and support card interactions.
 
+## Installation
+`pip install -r requirements.txt`
+Suggestion: use Python venv (`python -m venv uma-venv` before installation, then on every terminal spawn `source ./uma-venv/scripts/activate` or whatever platform-specific activation script)
+
 ## Project Structure
 
 - `sage_sim/` - Contains an old version of the simulator (will be deleted later)
