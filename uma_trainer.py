@@ -3,6 +3,7 @@ from gymnasium import spaces
 from gymnasium.envs.registration import register
 from enum import Enum
 from train import Uma, load_character, load_support_card, SUMMER_TURNS, clamp
+import logging
 import numpy as np
 
 # Register this module as a gym environment. Once registered, the id is usable in gym.make().
@@ -58,9 +59,12 @@ class UmaEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed) # gym requires this call to control randomness and reproduce scenarios.
 
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.WARNING)
+
         character = load_character(self.character_name)
         support_cards = [load_support_card(name) for name in self.support_cards]
-        self.uma = Uma(character, support_cards)
+        self.uma = Uma(logger=logger, character_data=character, support_cards=support_cards)
         self.render()
 
         return self._get_obs(), {}
