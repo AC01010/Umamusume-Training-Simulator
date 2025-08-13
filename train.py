@@ -1,6 +1,8 @@
 import json
 import random
+import sys
 import numpy as np
+import logging
 from support_card import support
 from tabulate import tabulate
 
@@ -118,7 +120,10 @@ def sim_training_fail(training_type, energy_after_training):
 
 
 class Uma:
-    def __init__(self, character_data, support_cards):
+    def __init__(self, logger, character_data, support_cards):
+        self.logger = logger
+        self.logger.addHandler(logging.StreamHandler(sys.stdout))
+
         self.name = character_data['name']
         self.surfaceAptitude = character_data['surfaceAptitude']
         self.distanceAptitudes = character_data['distanceAptitudes']
@@ -216,7 +221,7 @@ class Uma:
             self._handle_training_failure(training_type)
         else:
             # Successful training - apply energy cost and stat gains
-            print(f"\nTraining success on {FACILITY_MAP[training_type]}.")
+            self.logger.info(f"\nTraining success on {FACILITY_MAP[training_type]}.")
 
             supp_on_training = self.card_assignment[training_type]
 
@@ -233,17 +238,17 @@ class Uma:
             stat_names = ["Speed", "Stamina", "Power", "Guts", "Intelligence"]
             for i in range(5):
                 if training_stats[i] > 0:
-                    print(f"{stat_names[i]} went up by {stat_changes[i]}.")
+                    self.logger.info(f"{stat_names[i]} went up by {stat_changes[i]}.")
             
             # Display energy change
             energy_cost = abs(training_stats[-1])
             #Display the supports and the names of their facility
-            print("-----------")
+            self.logger.info("-----------")
             for training in supp_on_training:
-                print(f"{self.support_cards[training].name} is on {FACILITY_MAP[training_type]} facility.")
-            print(f"Energy went down by {energy_cost}.")
+                self.logger.info(f"{self.support_cards[training].name} is on {FACILITY_MAP[training_type]} facility.")
+            self.logger.info(f"Energy went down by {energy_cost}.")
 
-            print(f"Skill points went up by {stat_changes[-1]}.")
+            self.logger.info(f"Skill points went up by {stat_changes[-1]}.")
             
             # Increment facility clicks
             self.facilityClicks[training_type] += 1
@@ -269,22 +274,22 @@ class Uma:
             self._handle_normal_outcome(training_type)
     
     def _handle_normal_outcome(self, training_type):
-        print("\nTraining failed.")
+        self.logger.info("\nTraining failed.")
         
         # Get Well Soon! (always choose top option)
         self.mood -= 1
         self.mood = max(0, self.mood)  # Cap mood at minimum 0
         self.stats[training_type] -= 5
         
-        print(f"{FACILITY_MAP[training_type]} went down by 5.")
+        self.logger.info(f"{FACILITY_MAP[training_type]} went down by 5.")
         
         # 8% chance of Poor Practice
         if random.random() < 0.08:
             self.badConditions.add("Poor Practice")
-            print("Acquired condition Poor Practice.")
+            self.logger.info("Acquired condition Poor Practice.")
     
     def _handle_worst_outcome(self, training_type):
-        print("\nTraining failed badly.")
+        self.logger.info("\nTraining failed badly.")
         
         # Don't Overdo It! (always choose top option)
         self.mood -= 3
@@ -292,39 +297,39 @@ class Uma:
         self.energy += 10
         self.stats[training_type] -= 10
         
-        print(f"{FACILITY_MAP[training_type]} went down by 10.")
-        print(f"Energy went up by 10.")
+        self.logger.info(f"{FACILITY_MAP[training_type]} went down by 10.")
+        self.logger.info(f"Energy went up by 10.")
         
         # Reduce 2 random stats by 10 (can include the same trained stat)
         random_stats = random.sample(list(range(5)), 2)
         for stat_idx in random_stats:
             self.stats[stat_idx] -= 10
-            print(f"{FACILITY_MAP[stat_idx]} went down by 10.")
+            self.logger.info(f"{FACILITY_MAP[stat_idx]} went down by 10.")
         
         # 50% chance of Poor Practice
         if random.random() < 0.5:
             self.badConditions.add("Poor Practice")
-            print("Acquired condition Poor Practice.")
+            self.logger.info("Acquired condition Poor Practice.")
     
     def rest(self):
         rand = random.random()
         
-        print("\nResting...")
+        self.logger.info("\nResting...")
         
         if rand < 0.255:  # 25.5%
             self.energy += 70
-            print("Energy went up by 70.")
+            self.logger.info("Energy went up by 70.")
         elif rand < 0.835:  # 58% (0.255 + 0.58 = 0.835)
             self.energy += 50
-            print("Energy went up by 50.")
+            self.logger.info("Energy went up by 50.")
         elif rand < 0.965:  # 13% (0.835 + 0.13 = 0.965)
             self.energy += 30
-            print("Energy went up by 30.")
+            self.logger.info("Energy went up by 30.")
         else:  # 3.5% (remaining)
             self.energy += 30
             self.badConditions.add("Night Owl")
-            print("Energy went up by 30.")
-            print("Acquired condition Night Owl.")
+            self.logger.info("Energy went up by 30.")
+            self.logger.info("Acquired condition Night Owl.")
 
         self.energy = min(self.maxEnergy, self.energy)  # Cap energy at max energy
         
@@ -332,31 +337,31 @@ class Uma:
     def recreation(self):
         rand = random.random()
         
-        print("\nRecreation...")
+        self.logger.info("\nRecreation...")
         
         if rand < 0.35:  # 35%
             self.mood += 2  # Karaoke
-            print("Karaoke! Mood went up by 2.")
+            self.logger.info("Karaoke! Mood went up by 2.")
         elif rand < 0.65:  # 30% (0.35 + 0.30 = 0.65)
             self.mood += 1  # Stroll
             self.energy += 10
-            print("Stroll! Mood went up by 1.")
-            print("Energy went up by 10.")
+            self.logger.info("Stroll! Mood went up by 1.")
+            self.logger.info("Energy went up by 10.")
         elif rand < 0.85:  # 20% (0.65 + 0.20 = 0.85)
             self.mood += 1  # Shrine
             self.energy += 10
-            print("Shrine visit (average luck)! Mood went up by 1.")
-            print("Energy went up by 10.")
+            self.logger.info("Shrine visit (average luck)! Mood went up by 1.")
+            self.logger.info("Energy went up by 10.")
         elif rand < 0.95:  # 10% (0.85 + 0.10 = 0.95)
             self.mood += 1  # Shrine
             self.energy += 20
-            print("Shrine visit (good luck)! Mood went up by 1.")
-            print("Energy went up by 20.")
+            self.logger.info("Shrine visit (good luck)! Mood went up by 1.")
+            self.logger.info("Energy went up by 20.")
         else:  # 5% (remaining)
             self.mood += 1  # Shrine
             self.energy += 30
-            print("Shrine visit (great luck)! Mood went up by 1.")
-            print("Energy went up by 30.")
+            self.logger.info("Shrine visit (great luck)! Mood went up by 1.")
+            self.logger.info("Energy went up by 30.")
         
         # Cap mood at maximum 4
         self.mood = min(4, self.mood)
@@ -366,10 +371,10 @@ class Uma:
         
     
     def infirmary(self):
-        print("\nVisiting infirmary...")
+        self.logger.info("\nVisiting infirmary...")
         
         self.energy = min(self.maxEnergy, self.energy + 20)
-        print("Energy went up by 20.")
+        self.logger.info("Energy went up by 20.")
         
         # 85% chance of curing exactly one bad status condition (except "Under the Weather")
         if random.random() < 0.85:
@@ -377,21 +382,21 @@ class Uma:
             if curable_conditions:
                 condition_to_cure = random.choice(curable_conditions)
                 self.badConditions.remove(condition_to_cure)
-                print(f"Cured condition {condition_to_cure}.")
+                self.logger.info(f"Cured condition {condition_to_cure}.")
             else:
-                print("No conditions to cure.")
+                self.logger.info("No conditions to cure.")
         else:
-            print("Treatment was not effective this time.")
+            self.logger.info("Treatment was not effective this time.")
         
     
     def rest_and_recreation(self):
-        print("\nRest and recreation...")
+        self.logger.info("\nRest and recreation...")
         
         self.energy += 40
         self.mood += 1
         
-        print("Energy went up by 40.")
-        print("Mood went up by 1.")
+        self.logger.info("Energy went up by 40.")
+        self.logger.info("Mood went up by 1.")
         
         # Cap mood at maximum 4
         self.mood = min(4, self.mood)
@@ -400,8 +405,7 @@ class Uma:
         self.energy = min(self.maxEnergy, self.energy)
 
     def displayStats(self):
-        print()
-        print(f"📅 {TURN_PHASES.get(self.turnNo, 'Unknown Turn')}")
+        self.logger.info(f"📅 {TURN_PHASES.get(self.turnNo, 'Unknown Turn')}")
         
         # Create energy bar with percentage
         energy_percentage = int((self.energy / self.maxEnergy) * 100)
@@ -409,18 +413,18 @@ class Uma:
         filled_blocks = int((self.energy / self.maxEnergy) * bar_length)
         energy_bar = "█" * filled_blocks + "▒" * (bar_length - filled_blocks)
         
-        print(f"\nEnergy: [ {energy_bar} ] {energy_percentage}% | Mood: {MOOD_NAMES.get(self.mood, 'Unknown')}")
+        self.logger.info(f"\nEnergy: [ {energy_bar} ] {energy_percentage}% | Mood: {MOOD_NAMES.get(self.mood, 'Unknown')}")
 
         headers = ['Speed', 'Stamina', 'Power', 'Guts', 'Wit', 'Skill Pts']
         vals = self.stats.reshape((1, -1))
 
-        print(tabulate(vals, headers=headers, tablefmt='rounded_outline'))
+        self.logger.info(tabulate(vals, headers=headers, tablefmt='rounded_outline'))
 
         if self.goodConditions or self.badConditions:
             all_conditions = list(self.goodConditions) + list(self.badConditions)
-            print(f"\nConditions: {', '.join(all_conditions)}")
+            self.logger.info(f"\nConditions: {', '.join(all_conditions)}")
         else:
-            print(f"\nConditions: None")
+            self.logger.info(f"\nConditions: None")
     
     def displayTurn(self, current_turn):
         options = []
@@ -442,7 +446,7 @@ class Uma:
         
         # Display options
         for i, option in enumerate(options, 1):
-            print(f"{i}) {option}")
+            self.logger.info(f"{i}) {option}")
         
         while True:
             try:
@@ -450,12 +454,12 @@ class Uma:
                 if 1 <= choice <= len(options):
                     return choice - 1, options[choice - 1]  # Return 0-indexed choice and option name
                 else:
-                    print(f"Please enter a number between 1 and {len(options)}")
+                    self.logger.info(f"Please enter a number between 1 and {len(options)}")
             except ValueError:
-                print("Please enter a valid number")
+                self.logger.info("Please enter a valid number")
     
     def displayTraining(self):
-        print("\n--- Training Options ---")
+        self.logger.info("\n--- Training Options ---")
         training_options = ["Speed", "Stamina", "Power", "Guts", "Intelligence"]
 
         
@@ -481,12 +485,12 @@ class Uma:
             supp_on_facility = [self.support_cards[a].name for a in self.card_assignment[i]]
             bonds_on_facility = [self.support_bonds[a] for a in self.card_assignment[i]]
 
-            print(f"{i+1}) {training} (Lv{level})")
-            print(f'   Supports: {list(zip(supp_on_facility, bonds_on_facility))}')
-            print(f"   Stats: {', '.join(stat_gains) if stat_gains else 'None'}")
-            print(f"   Skill Pts: +{skill_pts}")
-            print(f"   Energy After: {max(0, energy_after)}")
-            print(f"   Failure Rate: {failure_rate:.1f}%")
+            self.logger.info(f"{i+1}) {training} (Lv{level})")
+            self.logger.info(f'   Supports: {list(zip(supp_on_facility, bonds_on_facility))}')
+            self.logger.info(f"   Stats: {', '.join(stat_gains) if stat_gains else 'None'}")
+            self.logger.info(f"   Skill Pts: +{skill_pts}")
+            self.logger.info(f"   Energy After: {max(0, energy_after)}")
+            self.logger.info(f"   Failure Rate: {failure_rate:.1f}%")
         
         while True:
             try:
@@ -494,9 +498,9 @@ class Uma:
                 if 1 <= choice <= len(training_options):
                     return choice - 1  # Return 0-indexed choice
                 else:
-                    print(f"Please enter a number between 1 and {len(training_options)}")
+                    self.logger.info(f"Please enter a number between 1 and {len(training_options)}")
             except ValueError:
-                print("Please enter a valid number")
+                self.logger.info("Please enter a valid number")
 
     def getTrainingIncrease(self):
         training_options = ["Speed", "Stamina", "Power", "Guts", "Intelligence"]
@@ -520,7 +524,7 @@ class Uma:
         return np.array(increases)
 
     def renderTraining(self):
-        print("\n--- Training Options ---")
+        self.logger.info("\n--- Training Options ---")
         training_options = ["Speed", "Stamina", "Power", "Guts", "Intelligence"]
 
         for i, training in enumerate(training_options):
@@ -545,19 +549,19 @@ class Uma:
             supp_on_facility = [self.support_cards[a].name for a in self.card_assignment[i]]
             bonds_on_facility = [self.support_bonds[a] for a in self.card_assignment[i]]
 
-            print(f"{i + 1}) {training} (Lv{level})")
-            print(f'   Supports: {list(zip(supp_on_facility, bonds_on_facility))}')
-            print(f"   Stats: {', '.join(stat_gains) if stat_gains else 'None'}")
-            print(f"   Skill Pts: +{skill_pts}")
-            print(f"   Energy After: {max(0, energy_after)}")
-            print(f"   Failure Rate: {failure_rate:.1f}%")
+            self.logger.info(f"{i + 1}) {training} (Lv{level})")
+            self.logger.info(f'   Supports: {list(zip(supp_on_facility, bonds_on_facility))}')
+            self.logger.info(f"   Stats: {', '.join(stat_gains) if stat_gains else 'None'}")
+            self.logger.info(f"   Skill Pts: +{skill_pts}")
+            self.logger.info(f"   Energy After: {max(0, energy_after)}")
+            self.logger.info(f"   Failure Rate: {failure_rate:.1f}%")
     
     def turn(self):
         # Display large banner for current turn's date
         current_turn_phase = TURN_PHASES.get(self.turnNo, 'Unknown Turn')
-        print("\n" + "="*60)
-        print(f"🗓️  {current_turn_phase}  🗓️".center(60))
-        print("="*60)
+        self.logger.info("\n" + "="*60)
+        self.logger.info(f"🗓️  {current_turn_phase}  🗓️".center(60))
+        self.logger.info("="*60)
         
         # Display current stats
         self.displayStats()
@@ -586,7 +590,7 @@ class Uma:
         
         # Check if training is complete (turn 72 is the last training turn)
         if self.turnNo >= 72:
-            print(f"\n🎉 Training complete! Moving to URA Finals...")
+            self.logger.info(f"\n🎉 Training complete! Moving to URA Finals...")
             return False  # End training phase
         
         return True  # Continue training
@@ -615,6 +619,9 @@ def load_support_card(name):
 
 
 def main():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
     support_cards = []
     support_cards.append('Kitasan Black')
     support_cards.append('Super Creek')
@@ -627,7 +634,7 @@ def main():
 
     supports = [load_support_card(name) for name in support_cards]
 
-    uma = Uma(character_data, supports)
+    uma = Uma(logger=logger, character_data=character_data, support_cards=supports)
 
     
     print(f"🏇 Welcome to Umamusume Training Simulator! 🏇")
