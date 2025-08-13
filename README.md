@@ -14,6 +14,12 @@ Suggestion: use Python venv (`python -m venv uma-venv` before installation, then
 - `train.py` - Main simulator file with core classes and functions
 - `support_card.py` - Support card class implementation
 
+## Reinforced Learning Structure
+- `uma_trainer.py` - Gymnasium environment wrapped around the simulator for reinforcement learning
+- `train_rl.py` - RL training script using Stable Baselines3 MaskablePPO algorithm
+- `models/` - Directory for saving trained RL models
+- `logs/` - Directory for tensorboard logs and training metrics
+
 ## API Structure
 
 The simulator is built around two main classes:
