@@ -115,3 +115,29 @@ The following Umamusume mechanics are **not** currently implemented:
 - **Failure Rate Curves**: Fitted from energy sampling data from JP server gameplay
 - **Probability Distributions**: Based on samples from [Famitsu analysis](https://www.famitsu.com/news/202106/01222293.html)
 - **Hint Frequency Equations**: Derived from [Mukakin Blog research](https://www.mukakin-blog.com/491634168.html)
+
+## Reinforcement Learning Implementation
+### Action Space
+- **Discrete Action Space**: 9 actions corresponding to training facilities and activities
+  - `0`: Train Speed
+  - `1`: Train Stamina
+  - `2`: Train Power
+  - `3`: Train Guts
+  - `4`: Train Wit
+  - `5`: Rest
+  - `6`: Recreation
+  - `7`: Infirmary
+  - `8`: Rest & Recreation
+
+### Observation Space
+- **Observation Space**: Dictionary with the following keys:
+  - `stats`: Current stats (Speed, Stamina, Power, Guts, Wit)
+  - `energy`: Current energy level
+  - `mood`: Current mood level
+  - `turn_no`: Current turn number
+  - `stats_increase`: Stat increase for all possible trainings with support cards
+  - `support_bond`: Bond levels of support cards
+  - `conditions`: Current bad conditions
+  
+### Reward Structure
+- `_calculate_reward()`: Calculates rewards based on previous observation space and current observatoin space
